@@ -8,13 +8,13 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="glass-card p-6 rounded-2xl border border-white/10 shadow-2xl transition-all duration-300">
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3 md:gap-4">
         <label class="text-sm font-medium text-slate-400 uppercase tracking-widest px-1">Describe your system</label>
         <div class="relative group">
           <textarea
             [(ngModel)]="prompt"
-            placeholder="e.g., Design a scalable URL shortener like Bitly"
-            class="w-full h-24 bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none group-hover:border-white/20"
+            placeholder="e.g. Design Uber at 10M scale..."
+            class="w-full h-24 md:h-32 bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 text-xs md:text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none placeholder:text-slate-600"
             [disabled]="loading"
           ></textarea>
           <div class="absolute inset-0 rounded-xl bg-indigo-500/5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"></div>
