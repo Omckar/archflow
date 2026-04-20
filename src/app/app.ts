@@ -44,10 +44,18 @@ import domtoimage from 'dom-to-image-more';
               <span class="sm:hidden">{{ simulationMode() ? 'Stop' : 'Run' }}</span>
             </button>
             <button (click)="downloadPNG()" 
+                    [disabled]="downloading()"
+                    [class.opacity-50]="downloading()"
                     class="px-2 md:px-4 py-1.5 md:py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] md:text-sm font-semibold transition-all flex items-center gap-1.5 md:gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:w-4 md:h-4"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-              <span class="hidden sm:inline">Download PNG</span>
-              <span class="sm:hidden">PNG</span>
+              @if (downloading()) {
+                <svg class="animate-spin h-3 w-3 md:h-4 md:w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <span class="hidden sm:inline">Exporting...</span>
+                <span class="sm:hidden">...</span>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:w-4 md:h-4"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                <span class="hidden sm:inline">Download PNG</span>
+                <span class="sm:hidden">PNG</span>
+              }
             </button>
           }
         </div>
@@ -225,33 +233,47 @@ export class App {
     }
   }
 
+  downloading = signal(false);
+
   async downloadPNG() {
-    if (!this.exportArea) return;
+    if (!this.exportArea || this.downloading()) return;
     
     try {
+      this.downloading.set(true);
       console.log('Starting Image generation...');
       
+      const el = this.exportArea.nativeElement;
+      
+      // dom-to-image-more is better at handling SVGs
       const options = {
         bgcolor: '#0a0a0a',
-        width: this.exportArea.nativeElement.clientWidth * 2,
-        height: this.exportArea.nativeElement.clientHeight * 2,
+        width: el.clientWidth * 2,
+        height: el.clientHeight * 2,
         style: {
           transform: 'scale(2)',
           transformOrigin: 'top left',
-          width: this.exportArea.nativeElement.clientWidth + 'px',
-          height: this.exportArea.nativeElement.clientHeight + 'px'
+          width: el.clientWidth + 'px',
+          height: el.clientHeight + 'px'
         }
       };
 
-      const dataUrl = await domtoimage.toPng(this.exportArea.nativeElement, options);
+      const blob = await domtoimage.toBlob(el, options);
+      const url = URL.createObjectURL(blob);
       
       const link = document.createElement('a');
-      link.download = `system-design-${Date.now()}.png`;
-      link.href = dataUrl;
+      link.download = `archflow-design-${Date.now()}.png`;
+      link.href = url;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      
+      // Cleanup
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+      this.downloading.set(false);
     } catch (err) {
       console.error('Failed to generate PNG:', err);
-      alert('Failed to generate image. Try using Chrome or Edge.');
+      this.downloading.set(false);
+      alert('Failed to generate image. Please try again or use a desktop browser.');
     }
   }
 }

@@ -10,8 +10,7 @@ import { SystemDesign, SystemNode, SystemEdge } from '../../models/system-design
     <div class="relative w-full h-full bg-[#0a0a0a] overflow-hidden cursor-grab active:cursor-grabbing border border-white/10 rounded-2xl shadow-2xl"
          #canvasContainer
          (mousedown)="onMouseDown($event)"
-         (mousemove)="onMouseMove($event)"
-         (mouseup)="onMouseUp()"
+         (touchstart)="onTouchStart($event)"
          (wheel)="onWheel($event)">
       
       <svg class="w-full h-full" [attr.viewBox]="viewBox()">
@@ -55,6 +54,7 @@ import { SystemDesign, SystemNode, SystemEdge } from '../../models/system-design
             <g class="node cursor-pointer transition-transform duration-200"
                [class.scale-105]="selectedNodeId() === node.id"
                (mousedown)="onNodeMouseDown($event, node)"
+               (touchstart)="onNodeTouchStart($event, node)"
                (mouseenter)="nodeHovered.emit(node)"
                (mouseleave)="nodeHovered.emit(null)"
                (click)="selectNode(node)">
@@ -215,11 +215,52 @@ export class CanvasComponent {
     this.lastMouseY = event.clientY;
   }
 
+  onTouchStart(event: TouchEvent) {
+    if (this.isDraggingNode || event.touches.length === 0) return;
+    this.isDragging = true;
+    this.lastMouseX = event.touches[0].clientX;
+    this.lastMouseY = event.touches[0].clientY;
+  }
+
+  onNodeTouchStart(event: TouchEvent, node: SystemNode) {
+    if (event.touches.length === 0) return;
+    event.stopPropagation();
+    this.isDraggingNode = true;
+    this.draggedNode = node;
+    this.lastMouseX = event.touches[0].clientX;
+    this.lastMouseY = event.touches[0].clientY;
+  }
+
   @HostListener('window:mouseup')
+  @HostListener('window:touchend')
   onMouseUp() {
     this.isDragging = false;
     this.isDraggingNode = false;
     this.draggedNode = null;
+  }
+
+  @HostListener('window:touchmove', ['$event'])
+  onTouchMove(event: TouchEvent) {
+    if (event.touches.length === 0 || (!this.isDragging && !this.isDraggingNode)) return;
+    
+    // Prevent scrolling when dragging or panning
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+
+    const dx = (event.touches[0].clientX - this.lastMouseX) / this.zoom();
+    const dy = (event.touches[0].clientY - this.lastMouseY) / this.zoom();
+
+    if (this.isDragging) {
+      this.panX.update(x => x + dx * this.zoom());
+      this.panY.update(y => y + dy * this.zoom());
+    } else if (this.isDraggingNode && this.draggedNode) {
+      this.draggedNode.x += dx;
+      this.draggedNode.y += dy;
+    }
+
+    this.lastMouseX = event.touches[0].clientX;
+    this.lastMouseY = event.touches[0].clientY;
   }
 
   onWheel(event: WheelEvent) {
