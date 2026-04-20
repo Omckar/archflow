@@ -2,14 +2,14 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { SystemDesign } from '../models/system-design.model';
-import { OPENROUTER_API_KEY } from '../app.key';
 
 @Injectable({
   providedIn: 'root',
 })
 export class OpenRouterService {
   private apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
-  private apiKey = OPENROUTER_API_KEY;
+  // @ts-ignore
+  private apiKey = import.meta.env.NG_APP_SECRET_KEY;
 
   loading = signal(false);
   error = signal<string | null>(null);
