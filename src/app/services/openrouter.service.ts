@@ -2,13 +2,14 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { SystemDesign } from '../models/system-design.model';
+import { OPENROUTER_API_KEY } from '../app.key';
 
 @Injectable({
   providedIn: 'root',
 })
 export class OpenRouterService {
   private apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
-  private apiKey = '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';
+  private apiKey = OPENROUTER_API_KEY;
 
   loading = signal(false);
   error = signal<string | null>(null);
